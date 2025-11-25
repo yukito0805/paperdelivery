@@ -11,7 +11,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // {id, kind, name, room, chome, note, lat, lng, photo, marker}
 let points = [];
 let nextId = 1;
-let currentSearchQuery = ""; // 契約者名検索用
+let currentSearchQuery = "";
 
 function loadPoints() {
   const raw = localStorage.getItem('newspaperPoints');
@@ -68,9 +68,11 @@ const cancelBtn = document.getElementById("cancelBtn");
 const saveBtn = document.getElementById("saveBtn");
 
 let tempLatLng = null;
+let isModalOpen = false; // モーダル二重オープン防止
 
 function openModal(latlng) {
   tempLatLng = latlng;
+  isModalOpen = true;
   document.querySelector('input[name="kind"][value="house"]').checked = true;
   roomRow.style.display = "none";
   roomInput.value = "";
@@ -84,6 +86,7 @@ function openModal(latlng) {
 function closeModal() {
   modal.style.display = "none";
   tempLatLng = null;
+  isModalOpen = false;
 }
 
 document.querySelectorAll('input[name="kind"]').forEach(el => {
@@ -96,63 +99,71 @@ document.querySelectorAll('input[name="kind"]').forEach(el => {
   });
 });
 
-cancelBtn.addEventListener("click", closeModal);
-
-// ★ 写真ありでも必ず閉じるように async/await で書き直し
-saveBtn.addEventListener("click", async () => {
-  if (!tempLatLng) return;
-
-  const kind = document.querySelector('input[name="kind"]:checked').value;
-  const name = nameInput.value.trim();
-  const room = kind === "apartment" ? roomInput.value.trim() : "";
-  const chome = chomeInput.value.trim();
-  const note = noteInput.value.trim();
-  const file = photoInput && photoInput.files ? photoInput.files[0] : null;
-
-  if (!name) {
-    alert("契約者名を入力してください");
-    return;
-  }
-
-  let photoDataUrl = null;
-
-  if (file) {
-    try {
-      photoDataUrl = await readFileAsDataURL(file);
-    } catch (e) {
-      console.error(e);
-      alert("写真の読み込みに失敗しました。写真なしで登録します。");
-      photoDataUrl = null;
-    }
-  }
-
-  const newPoint = {
-    id: nextId++,
-    kind,
-    name,
-    room,
-    chome,
-    note,
-    lat: tempLatLng.lat,
-    lng: tempLatLng.lng,
-    photo: photoDataUrl,
-  };
-
-  addPointToMap(newPoint, true);
-
-  // 入力欄リセット
-  roomInput.value = "";
-  nameInput.value = "";
-  chomeInput.value = "";
-  noteInput.value = "";
-  if (photoInput) photoInput.value = "";
-
-  // どのパターンでも最後に必ず閉じる
+cancelBtn.addEventListener("click", () => {
   closeModal();
 });
 
-// 地図タップで新規登録
-map.on("click", e => openModal(e.latlng));
+// 写真ありでも必ず閉じるように try/finally
+saveBtn.addEventListener("click", async () => {
+  if (!tempLatLng) return;
+
+  try {
+    const kind = document.querySelector('input[name="kind"]:checked').value;
+    const name = nameInput.value.trim();
+    const room = kind === "apartment" ? roomInput.value.trim() : "";
+    const chome = chomeInput.value.trim();
+    const note = noteInput.value.trim();
+    const file = photoInput && photoInput.files ? photoInput.files[0] : null;
+
+    if (!name) {
+      alert("契約者名を入力してください");
+      return;
+    }
+
+    let photoDataUrl = null;
+
+    if (file) {
+      try {
+        photoDataUrl = await readFileAsDataURL(file);
+      } catch (e) {
+        console.error(e);
+        alert("写真の読み込みに失敗しました。写真なしで登録します。");
+        photoDataUrl = null;
+      }
+    }
+
+    const newPoint = {
+      id: nextId++,
+      kind,
+      name,
+      room,
+      chome,
+      note,
+      lat: tempLatLng.lat,
+      lng: tempLatLng.lng,
+      photo: photoDataUrl,
+    };
+
+    addPointToMap(newPoint, true);
+
+    // 入力欄リセット
+    roomInput.value = "";
+    nameInput.value = "";
+    chomeInput.value = "";
+    noteInput.value = "";
+    if (photoInput) photoInput.value = "";
+
+  } finally {
+    // 成功でもエラーでも、必ずモーダルを閉じる
+    closeModal();
+  }
+});
+
+// 地図タップで新規登録（モーダル表示中は無視）
+map.on("click", e => {
+  if (isModalOpen) return;
+  openModal(e.latlng);
+});
 
 // ====== マーカー生成 ======
 function createColoredMarker(point) {
@@ -223,13 +234,17 @@ detailModal.addEventListener("click", e => {
   if (e.target === detailModal) closeDetailModal();
 });
 
+// ★ 地図へ移動したあと、詳細も一覧も閉じる
 detailMapBtn.addEventListener("click", () => {
   if (currentDetailPointId == null) return;
   const p = points.find(pt => pt.id === currentDetailPointId);
   if (!p) return;
+
   map.setView([p.lat, p.lng], 18);
   p.marker.openPopup();
+
   closeDetailModal();
+  closeListModal(); // ← ここで一覧も閉じる
 });
 
 detailDeleteBtn.addEventListener("click", () => {

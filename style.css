@@ -1,5 +1,3 @@
-/* ===== ベース ===== */
-
 html, body {
   height: 100%;
   margin: 0;
@@ -13,8 +11,7 @@ html, body {
   width: 100vw;
 }
 
-/* ===== フローティングボタン（配達先一覧を開く） ===== */
-
+/* フローティングボタン */
 .fab-btn {
   position: fixed;
   bottom: 16px;
@@ -29,8 +26,7 @@ html, body {
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
-/* ===== 共通ボタン ===== */
-
+/* 共通ボタン */
 button {
   cursor: pointer;
   border-radius: 6px;
@@ -45,10 +41,7 @@ button {
   background: #007bff;
   color: #fff;
 }
-
-.primary-btn:active {
-  opacity: 0.8;
-}
+.primary-btn:active { opacity: 0.8; }
 
 .secondary-btn {
   font-size: 14px;
@@ -64,10 +57,7 @@ button {
   width: 100%;
   margin-bottom: 8px;
 }
-
-.danger-btn:active {
-  opacity: 0.85;
-}
+.danger-btn:active { opacity: 0.85; }
 
 .small-btn {
   width: auto;
@@ -75,8 +65,7 @@ button {
   font-size: 13px;
 }
 
-/* ===== 新規登録モーダル ===== */
-
+/* 新規登録モーダル */
 #modal {
   position: fixed;
   inset: 0;
@@ -147,8 +136,7 @@ small {
   font-size: 11px;
 }
 
-/* ===== 配達先一覧パネル（横からスライド） ===== */
-
+/* 配達先一覧パネル */
 #listModal {
   position: fixed;
   inset: 0;
@@ -172,9 +160,7 @@ small {
   flex-direction: column;
 }
 
-#listPanel.show {
-  transform: translateX(0);
-}
+#listPanel.show { transform: translateX(0); }
 
 .list-header {
   display: flex;
@@ -194,13 +180,11 @@ small {
 }
 
 /* 検索行 */
-
 .search-row {
   display: flex;
   gap: 6px;
   margin-bottom: 8px;
 }
-
 .search-row input {
   flex: 1;
   padding: 6px 8px;
@@ -210,7 +194,6 @@ small {
 }
 
 /* 配達先カード */
-
 #list {
   flex: 1;
   overflow-y: auto;
@@ -245,8 +228,7 @@ small {
   margin-top: 2px;
 }
 
-/* ===== 詳細モーダル（横からスライド） ===== */
-
+/* 詳細モーダル */
 #detailModal {
   position: fixed;
   inset: 0;
@@ -270,9 +252,7 @@ small {
   flex-direction: column;
 }
 
-#detailPanel.show {
-  transform: translateX(0);
-}
+#detailPanel.show { transform: translateX(0); }
 
 #detailPanel h3 {
   margin: 0 0 10px;
@@ -313,7 +293,6 @@ small {
   justify-content: space-between;
 }
 
-/* PC 向け（あれば） */
 @media (min-width: 900px) {
   .fab-btn {
     bottom: 24px;

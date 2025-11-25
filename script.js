@@ -19,9 +19,9 @@ function loadPoints() {
   try {
     const parsed = JSON.parse(raw);
     parsed.forEach(p => {
-      if (!("chome" in p)) p.chome = "";
-      if (!("note" in p)) p.note = "";
-      if (!("photo" in p)) p.photo = null;
+      if (!('chome' in p)) p.chome = "";
+      if (!('note' in p)) p.note = "";
+      if (!('photo' in p)) p.photo = null;
       addPointToMap(p, false);
     });
     const maxId = parsed.reduce((max, p) => Math.max(max, p.id), 0);
@@ -44,6 +44,16 @@ function savePoints() {
     photo: p.photo || null,
   }));
   localStorage.setItem("newspaperPoints", JSON.stringify(plain));
+}
+
+// ====== 画像ファイル → DataURL 変換ヘルパー ======
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
 }
 
 // ====== 新規登録モーダル ======
@@ -88,48 +98,57 @@ document.querySelectorAll('input[name="kind"]').forEach(el => {
 
 cancelBtn.addEventListener("click", closeModal);
 
-saveBtn.addEventListener("click", () => {
+// ★ 写真ありでも必ず閉じるように async/await で書き直し
+saveBtn.addEventListener("click", async () => {
   if (!tempLatLng) return;
+
   const kind = document.querySelector('input[name="kind"]:checked').value;
   const name = nameInput.value.trim();
   const room = kind === "apartment" ? roomInput.value.trim() : "";
   const chome = chomeInput.value.trim();
   const note = noteInput.value.trim();
+  const file = photoInput && photoInput.files ? photoInput.files[0] : null;
 
   if (!name) {
     alert("契約者名を入力してください");
     return;
   }
 
-  const file = photoInput && photoInput.files ? photoInput.files[0] : null;
-
-  const createAndSave = (photoDataUrl) => {
-    const newPoint = {
-      id: nextId++,
-      kind,
-      name,
-      room,
-      chome,
-      note,
-      lat: tempLatLng.lat,
-      lng: tempLatLng.lng,
-      photo: photoDataUrl || null,
-    };
-    addPointToMap(newPoint, true);
-    closeModal();
-  };
+  let photoDataUrl = null;
 
   if (file) {
-    const reader = new FileReader();
-    reader.onload = e => createAndSave(e.target.result);
-    reader.onerror = () => {
+    try {
+      photoDataUrl = await readFileAsDataURL(file);
+    } catch (e) {
+      console.error(e);
       alert("写真の読み込みに失敗しました。写真なしで登録します。");
-      createAndSave(null);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    createAndSave(null);
+      photoDataUrl = null;
+    }
   }
+
+  const newPoint = {
+    id: nextId++,
+    kind,
+    name,
+    room,
+    chome,
+    note,
+    lat: tempLatLng.lat,
+    lng: tempLatLng.lng,
+    photo: photoDataUrl,
+  };
+
+  addPointToMap(newPoint, true);
+
+  // 入力欄リセット
+  roomInput.value = "";
+  nameInput.value = "";
+  chomeInput.value = "";
+  noteInput.value = "";
+  if (photoInput) photoInput.value = "";
+
+  // どのパターンでも最後に必ず閉じる
+  closeModal();
 });
 
 // 地図タップで新規登録
@@ -307,7 +326,6 @@ function deletePoint(id) {
 function renderList() {
   listEl.innerHTML = "";
 
-  // 検索フィルタ（契約者名）
   const q = currentSearchQuery;
   const filtered = q
     ? points.filter(p =>

@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>新聞配達ルートマップ（現在地付き）</title>
+  <title>新聞配達ルートマップ（スマホ向け）</title>
+
+  <!-- スマホ用レスポンシブ指定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Leaflet（地図ライブラリ）のCSS -->
   <link
@@ -22,17 +25,17 @@
   <div id="sidebar">
     <h2>配達先一覧</h2>
     <p class="description">
-      地図をクリックすると新しい配達先を登録できます。<br/>
+      地図をタップすると新しい配達先を登録できます。<br/>
       データはブラウザに保存されます（localStorage）。
     </p>
 
     <!-- 現在地ボタン -->
     <button id="locateBtn" class="primary-btn">
-      現在地へ移動
+      📍 現在地へ移動
     </button>
 
     <button id="clearAllBtn" class="danger-btn">
-      すべて削除
+      🗑 すべて削除
     </button>
 
     <div id="list"></div>
@@ -52,17 +55,17 @@
 
     <div class="form-row">
       <label>種類</label>
-      <label>
+      <label class="radio-label">
         <input type="radio" name="kind" value="house" checked /> 一軒家
       </label>
-      <label>
+      <label class="radio-label">
         <input type="radio" name="kind" value="apartment" /> マンション
       </label>
     </div>
 
     <div class="form-row" id="roomRow" style="display:none;">
       <label for="roomInput">部屋番号（例：504）</label>
-      <input type="text" id="roomInput" placeholder="例：504" />
+      <input type="text" id="roomInput" placeholder="例：101" />
     </div>
 
     <div class="form-row">
@@ -73,8 +76,8 @@
     <small>※住所は地図上の位置＋丁目で管理します。</small>
 
     <div class="modal-buttons">
-      <button id="cancelBtn">キャンセル</button>
-      <button id="saveBtn">保存</button>
+      <button id="cancelBtn" class="secondary-btn">キャンセル</button>
+      <button id="saveBtn" class="primary-btn">保存</button>
     </div>
   </div>
 </div>

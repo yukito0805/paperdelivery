@@ -1,42 +1,56 @@
+/* ===== ベース ===== */
+
 html, body {
   height: 100%;
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  font-size: 16px; /* スマホでも見やすい標準サイズ */
 }
 
 #app {
   display: flex;
+  flex-direction: column; /* スマホは縦並び */
   height: 100vh;
 }
 
+/* ===== 地図エリア ===== */
+
 #map {
-  flex: 3;
+  flex: 0 0 55vh;     /* 画面の上 55% を地図に */
 }
+
+/* ===== サイドバー ===== */
 
 #sidebar {
   flex: 1;
-  border-left: 1px solid #ccc;
-  padding: 8px;
+  border-top: 1px solid #ccc;
+  padding: 10px;
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 15px;
   overflow-y: auto;
+  background: #fafafa;
 }
 
 #sidebar h2 {
-  margin-top: 0;
-  font-size: 16px;
+  margin: 0 0 6px;
+  font-size: 18px;
 }
 
 .description {
-  font-size: 12px;
+  font-size: 13px;
+  margin: 0 0 10px;
+  color: #555;
 }
+
+/* ===== 配達先カード ===== */
 
 .point-item {
   border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 6px;
-  margin-bottom: 6px;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #fff;
 }
 
 .point-item-header {
@@ -44,19 +58,61 @@ html, body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .point-item button {
-  font-size: 11px;
-  padding: 2px 4px;
+  font-size: 12px;
+  padding: 4px 6px;
+  margin-left: 4px;
 }
 
-/* クリック時の入力フォーム（モーダル） */
+/* ===== ボタン ===== */
+
+button {
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+}
+
+.primary-btn {
+  font-size: 14px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  width: 100%;
+  background: #007bff;
+  color: #fff;
+}
+
+.primary-btn:active {
+  opacity: 0.8;
+}
+
+.secondary-btn {
+  font-size: 14px;
+  padding: 8px 10px;
+  background: #e0e0e0;
+}
+
+.danger-btn {
+  font-size: 14px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  width: 100%;
+  background: #e53935;
+  color: #fff;
+}
+
+.danger-btn:active {
+  opacity: 0.85;
+}
+
+/* ===== モーダル（入力フォーム） ===== */
+
 #modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   display: none;
   align-items: center;
   justify-content: center;
@@ -65,43 +121,51 @@ html, body {
 
 #modalContent {
   background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  width: 260px;
+  border-radius: 10px;
+  padding: 14px;
+  width: 90vw;              /* スマホはほぼ全幅 */
+  max-width: 360px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 #modalContent h3 {
   margin-top: 0;
-  font-size: 15px;
+  font-size: 17px;
+  margin-bottom: 8px;
 }
 
 .form-row {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .form-row label {
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .form-row input[type="text"] {
   width: 100%;
   box-sizing: border-box;
-  padding: 4px;
+  padding: 8px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.radio-label {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 10px;
+  gap: 4px;
   font-size: 14px;
 }
 
 .modal-buttons {
-  text-align: right;
-  margin-top: 10px;
-}
-
-.modal-buttons button {
-  margin-left: 4px;
-  padding: 4px 8px;
-  font-size: 13px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 small {
@@ -109,28 +173,21 @@ small {
   font-size: 11px;
 }
 
-.primary-btn {
-  font-size: 12px;
-  margin-bottom: 6px;
-}
+/* ===== PC / タブレット向け調整（横に並べる） ===== */
 
-.danger-btn {
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-/*（必要ならスマホ向けに縦並びにしたいときはこんな感じ）
-@media (max-width: 768px) {
+@media (min-width: 800px) {
   #app {
-    flex-direction: column;
+    flex-direction: row; /* 横並び */
   }
+
   #map {
-    flex: none;
-    height: 60vh;
+    flex: 3;
+    height: 100vh;
   }
+
   #sidebar {
-    flex: none;
-    height: 40vh;
+    flex: 1;
+    border-top: none;
+    border-left: 1px solid #ccc;
   }
 }
-*/

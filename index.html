@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>新聞配達ルートマップ（現在地付き）</title>
+
+  <!-- Leaflet（地図ライブラリ）のCSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <!-- 自分のCSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <div id="map"></div>
+
+  <div id="sidebar">
+    <h2>配達先一覧</h2>
+    <p class="description">
+      地図をクリックすると新しい配達先を登録できます。<br/>
+      データはブラウザに保存されます（localStorage）。
+    </p>
+
+    <!-- 現在地ボタン -->
+    <button id="locateBtn" class="primary-btn">
+      現在地へ移動
+    </button>
+
+    <button id="clearAllBtn" class="danger-btn">
+      すべて削除
+    </button>
+
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- 入力モーダル -->
+<div id="modal">
+  <div id="modalContent">
+    <h3>配達先を登録</h3>
+
+    <!-- 丁目入力 -->
+    <div class="form-row">
+      <label for="chomeInput">丁目（例：旭町3丁目 / 3丁目）</label>
+      <input type="text" id="chomeInput" placeholder="例：旭町3丁目 / 3丁目" />
+    </div>
+
+    <div class="form-row">
+      <label>種類</label>
+      <label>
+        <input type="radio" name="kind" value="house" checked /> 一軒家
+      </label>
+      <label>
+        <input type="radio" name="kind" value="apartment" /> マンション
+      </label>
+    </div>
+
+    <div class="form-row" id="roomRow" style="display:none;">
+      <label for="roomInput">部屋番号（例：504）</label>
+      <input type="text" id="roomInput" placeholder="例：504" />
+    </div>
+
+    <div class="form-row">
+      <label for="nameInput">主の名前</label>
+      <input type="text" id="nameInput" placeholder="例：山田 太郎" />
+    </div>
+
+    <small>※住所は地図上の位置＋丁目で管理します。</small>
+
+    <div class="modal-buttons">
+      <button id="cancelBtn">キャンセル</button>
+      <button id="saveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet本体のJS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+
+<!-- 自分のJS -->
+<script src="script.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>新聞配達ルートマップ（スマホ向け）</title>
+  <title>新聞配達ルートマップ（スマホ向け＋写真＋検索）</title>
 
   <!-- スマホ用レスポンシブ指定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,30 +19,14 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div id="app">
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div id="sidebar">
-    <h2>配達先一覧</h2>
-    <p class="description">
-      地図をタップすると新しい配達先を登録できます。<br/>
-      データはブラウザに保存されます（localStorage）。
-    </p>
+<!-- 配達先一覧を開くフローティングボタン -->
+<button id="openListBtn" class="fab-btn">
+  📋 配達先
+</button>
 
-    <!-- 現在地ボタン -->
-    <button id="locateBtn" class="primary-btn">
-      📍 現在地へ移動
-    </button>
-
-    <button id="clearAllBtn" class="danger-btn">
-      🗑 すべて削除
-    </button>
-
-    <div id="list"></div>
-  </div>
-</div>
-
-<!-- 入力モーダル -->
+<!-- 新規登録用モーダル -->
 <div id="modal">
   <div id="modalContent">
     <h3>配達先を登録</h3>
@@ -65,12 +49,30 @@
 
     <div class="form-row" id="roomRow" style="display:none;">
       <label for="roomInput">部屋番号（例：504）</label>
-      <input type="text" id="roomInput" placeholder="例：101" />
+      <input type="text" id="roomInput" placeholder="例：504" />
     </div>
 
     <div class="form-row">
-      <label for="nameInput">主の名前</label>
+      <label for="nameInput">契約者名</label>
       <input type="text" id="nameInput" placeholder="例：山田 太郎" />
+    </div>
+
+    <!-- 備考欄 -->
+    <div class="form-row">
+      <label for="noteInput">備考（任意）</label>
+      <textarea id="noteInput" rows="2" placeholder="ポストの位置・犬・注意点など"></textarea>
+    </div>
+
+    <!-- 写真（カメラ）入力 -->
+    <div class="form-row">
+      <label for="photoInput">建物の写真（任意）</label>
+      <input
+        type="file"
+        id="photoInput"
+        accept="image/*"
+        capture="environment"
+      />
+      <small>※スマホの場合、カメラが起動します（ブラウザによる）</small>
     </div>
 
     <small>※住所は地図上の位置＋丁目で管理します。</small>
@@ -78,6 +80,83 @@
     <div class="modal-buttons">
       <button id="cancelBtn" class="secondary-btn">キャンセル</button>
       <button id="saveBtn" class="primary-btn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 配達先一覧パネル（横からスライド） -->
+<div id="listModal">
+  <div id="listPanel">
+    <div class="list-header">
+      <h2>配達先一覧</h2>
+      <button id="closeListBtn" class="secondary-btn small-btn">閉じる</button>
+    </div>
+
+    <p class="description">
+      地図をタップすると新しい配達先を登録できます。<br/>
+      データはブラウザに保存されます（localStorage）。
+    </p>
+
+    <!-- 契約者名検索 -->
+    <div class="search-row">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="契約者名で検索（例：山田）"
+      />
+      <button id="searchBtn" class="primary-btn small-btn">検索</button>
+      <button id="clearSearchBtn" class="secondary-btn small-btn">クリア</button>
+    </div>
+
+    <!-- 現在地＆全削除 -->
+    <button id="locateBtn" class="primary-btn">
+      📍 現在地へ移動
+    </button>
+
+    <button id="clearAllBtn" class="danger-btn">
+      🗑 すべて削除
+    </button>
+
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- 詳細表示用モーダル（横からスライド） -->
+<div id="detailModal">
+  <div id="detailPanel">
+    <h3 id="detailTitle">配達先詳細</h3>
+    <div id="detailBody">
+      <div class="detail-row">
+        <span class="detail-label">種類</span>
+        <span id="detailKind"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">契約者</span>
+        <span id="detailName"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">丁目</span>
+        <span id="detailChome"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">座標</span>
+        <span id="detailCoord"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">備考</span>
+        <span id="detailNote"></span>
+      </div>
+
+      <!-- 写真表示エリア -->
+      <div id="detailPhotoWrapper" class="detail-photo" style="display:none;">
+        <div class="detail-label">写真</div>
+        <img id="detailPhoto" alt="建物写真" />
+      </div>
+    </div>
+    <div class="modal-buttons detail-buttons">
+      <button id="detailCloseBtn" class="secondary-btn">閉じる</button>
+      <button id="detailDeleteBtn" class="danger-btn">削除</button>
+      <button id="detailMapBtn" class="primary-btn">地図へ移動</button>
     </div>
   </div>
 </div>

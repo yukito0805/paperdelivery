@@ -5,69 +5,31 @@ html, body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  font-size: 16px; /* スマホでも見やすい標準サイズ */
+  font-size: 16px;
 }
-
-#app {
-  display: flex;
-  flex-direction: column; /* スマホは縦並び */
-  height: 100vh;
-}
-
-/* ===== 地図エリア ===== */
 
 #map {
-  flex: 0 0 55vh;     /* 画面の上 55% を地図に */
+  height: 100vh;
+  width: 100vw;
 }
 
-/* ===== サイドバー ===== */
+/* ===== フローティングボタン（配達先一覧を開く） ===== */
 
-#sidebar {
-  flex: 1;
-  border-top: 1px solid #ccc;
-  padding: 10px;
-  box-sizing: border-box;
+.fab-btn {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1200;
+  border-radius: 999px;
+  padding: 10px 14px;
   font-size: 15px;
-  overflow-y: auto;
-  background: #fafafa;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
-#sidebar h2 {
-  margin: 0 0 6px;
-  font-size: 18px;
-}
-
-.description {
-  font-size: 13px;
-  margin: 0 0 10px;
-  color: #555;
-}
-
-/* ===== 配達先カード ===== */
-
-.point-item {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 8px;
-  background: #fff;
-}
-
-.point-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  font-weight: 600;
-}
-
-.point-item button {
-  font-size: 12px;
-  padding: 4px 6px;
-  margin-left: 4px;
-}
-
-/* ===== ボタン ===== */
+/* ===== 共通ボタン ===== */
 
 button {
   cursor: pointer;
@@ -97,17 +59,23 @@ button {
 .danger-btn {
   font-size: 14px;
   padding: 8px 10px;
-  margin-bottom: 8px;
-  width: 100%;
   background: #e53935;
   color: #fff;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .danger-btn:active {
   opacity: 0.85;
 }
 
-/* ===== モーダル（入力フォーム） ===== */
+.small-btn {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* ===== 新規登録モーダル ===== */
 
 #modal {
   position: fixed;
@@ -116,15 +84,15 @@ button {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1300;
 }
 
 #modalContent {
   background: #fff;
   border-radius: 10px;
   padding: 14px;
-  width: 90vw;              /* スマホはほぼ全幅 */
-  max-width: 360px;
+  width: 90vw;
+  max-width: 380px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   font-size: 15px;
 }
@@ -144,13 +112,19 @@ button {
   margin-bottom: 4px;
 }
 
-.form-row input[type="text"] {
+.form-row input[type="text"],
+.form-row input[type="file"],
+.form-row textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
   font-size: 15px;
   border-radius: 6px;
   border: 1px solid #ccc;
+}
+
+.form-row textarea {
+  resize: vertical;
 }
 
 .radio-label {
@@ -173,21 +147,176 @@ small {
   font-size: 11px;
 }
 
-/* ===== PC / タブレット向け調整（横に並べる） ===== */
+/* ===== 配達先一覧パネル（横からスライド） ===== */
 
-@media (min-width: 800px) {
-  #app {
-    flex-direction: row; /* 横並び */
-  }
+#listModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1250;
+}
 
-  #map {
-    flex: 3;
-    height: 100vh;
-  }
+#listPanel {
+  background: #fafafa;
+  width: 90vw;
+  max-width: 380px;
+  height: 100%;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.25);
+  padding: 12px;
+  box-sizing: border-box;
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
+  display: flex;
+  flex-direction: column;
+}
 
-  #sidebar {
-    flex: 1;
-    border-top: none;
-    border-left: 1px solid #ccc;
+#listPanel.show {
+  transform: translateX(0);
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.description {
+  font-size: 13px;
+  margin: 6px 0 10px;
+  color: #555;
+}
+
+/* 検索行 */
+
+.search-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.search-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* 配達先カード */
+
+#list {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.point-item {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+
+.point-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.point-item button {
+  font-size: 12px;
+  padding: 4px 6px;
+  margin-left: 4px;
+}
+
+.point-note {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ===== 詳細モーダル（横からスライド） ===== */
+
+#detailModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1400;
+}
+
+#detailPanel {
+  background: #fff;
+  width: 90vw;
+  max-width: 380px;
+  height: 100%;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.25);
+  padding: 14px;
+  box-sizing: border-box;
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+#detailPanel.show {
+  transform: translateX(0);
+}
+
+#detailPanel h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+#detailBody {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.detail-label {
+  width: 70px;
+  color: #666;
+}
+
+/* 写真表示 */
+.detail-photo {
+  margin-top: 10px;
+}
+
+.detail-photo img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 8px;
+  margin-top: 4px;
+  object-fit: cover;
+}
+
+.detail-buttons {
+  justify-content: space-between;
+}
+
+/* PC 向け（あれば） */
+@media (min-width: 900px) {
+  .fab-btn {
+    bottom: 24px;
+    left: 24px;
   }
 }

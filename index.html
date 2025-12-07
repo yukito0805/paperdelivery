@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>新聞配達ルートマップ（スマホ向け＋写真＋検索）</title>
+  <title>新聞配達ルートマップ（スマホ向け＋写真＋検索＋新聞色分け）</title>
 
   <!-- スマホ用レスポンシブ指定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -55,6 +55,16 @@
     <div class="form-row">
       <label for="nameInput">契約者名</label>
       <input type="text" id="nameInput" placeholder="例：山田 太郎" />
+    </div>
+
+    <!-- 新聞の種類 -->
+    <div class="form-row">
+      <label for="paperType">新聞の種類</label>
+      <select id="paperType">
+        <option value="mainichi">毎日新聞</option>
+        <option value="asahi">朝日新聞</option>
+        <option value="nikkei">日経新聞</option>
+      </select>
     </div>
 
     <!-- 備考欄 -->
@@ -129,6 +139,10 @@
       <div class="detail-row">
         <span class="detail-label">種類</span>
         <span id="detailKind"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">新聞</span>
+        <span id="detailPaper"></span>
       </div>
       <div class="detail-row">
         <span class="detail-label">契約者</span>

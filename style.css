@@ -103,7 +103,8 @@ button {
 
 .form-row input[type="text"],
 .form-row input[type="file"],
-.form-row textarea {
+.form-row textarea,
+.form-row select {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;

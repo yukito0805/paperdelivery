@@ -8,10 +8,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // ====== データ管理 ======
-// {id, kind, name, room, chome, note, lat, lng, photo, marker}
+// {id, kind, name, room, chome, note, paper, lat, lng, photo, marker}
 let points = [];
 let nextId = 1;
 let currentSearchQuery = "";
+
+// 新聞コード → 表示名
+function getPaperLabel(paper) {
+  switch (paper) {
+    case "mainichi":
+      return "毎日新聞";
+    case "asahi":
+      return "朝日新聞";
+    case "nikkei":
+      return "日経新聞";
+    default:
+      return "-";
+  }
+}
 
 function loadPoints() {
   const raw = localStorage.getItem('newspaperPoints');
@@ -22,6 +36,7 @@ function loadPoints() {
       if (!('chome' in p)) p.chome = "";
       if (!('note' in p)) p.note = "";
       if (!('photo' in p)) p.photo = null;
+      if (!('paper' in p)) p.paper = null; // 既存データ対策
       addPointToMap(p, false);
     });
     const maxId = parsed.reduce((max, p) => Math.max(max, p.id), 0);
@@ -39,6 +54,7 @@ function savePoints() {
     room: p.room,
     chome: p.chome,
     note: p.note || "",
+    paper: p.paper || null,
     lat: p.lat,
     lng: p.lng,
     photo: p.photo || null,
@@ -64,6 +80,7 @@ const nameInput = document.getElementById("nameInput");
 const chomeInput = document.getElementById("chomeInput");
 const noteInput = document.getElementById("noteInput");
 const photoInput = document.getElementById("photoInput");
+const paperSelect = document.getElementById("paperType");
 const cancelBtn = document.getElementById("cancelBtn");
 const saveBtn = document.getElementById("saveBtn");
 
@@ -79,6 +96,7 @@ function openModal(latlng) {
   nameInput.value = "";
   chomeInput.value = "";
   noteInput.value = "";
+  paperSelect.value = "mainichi"; // デフォルトを毎日に
   if (photoInput) photoInput.value = "";
   modal.style.display = "flex";
 }
@@ -113,6 +131,7 @@ saveBtn.addEventListener("click", async () => {
     const room = kind === "apartment" ? roomInput.value.trim() : "";
     const chome = chomeInput.value.trim();
     const note = noteInput.value.trim();
+    const paper = paperSelect.value;
     const file = photoInput && photoInput.files ? photoInput.files[0] : null;
 
     if (!name) {
@@ -139,6 +158,7 @@ saveBtn.addEventListener("click", async () => {
       room,
       chome,
       note,
+      paper,
       lat: tempLatLng.lat,
       lng: tempLatLng.lng,
       photo: photoDataUrl,
@@ -151,6 +171,7 @@ saveBtn.addEventListener("click", async () => {
     nameInput.value = "";
     chomeInput.value = "";
     noteInput.value = "";
+    paperSelect.value = "mainichi";
     if (photoInput) photoInput.value = "";
 
   } finally {
@@ -165,10 +186,21 @@ map.on("click", e => {
   openModal(e.latlng);
 });
 
-// ====== マーカー生成 ======
+// ====== マーカー生成（新聞別の色） ======
 function createColoredMarker(point) {
-  const isHouse = point.kind === "house";
-  const color = isHouse ? "#007bff" : "#e53935";
+  let color = "#666666"; // デフォルト（新聞未設定）
+
+  switch (point.paper) {
+    case "mainichi":
+      color = "#007bff"; // 毎日：青
+      break;
+    case "asahi":
+      color = "#e53935"; // 朝日：赤
+      break;
+    case "nikkei":
+      color = "#00c853"; // 日経：緑
+      break;
+  }
 
   return L.circleMarker([point.lat, point.lng], {
     radius: 9,
@@ -183,6 +215,7 @@ function createColoredMarker(point) {
 const detailModal = document.getElementById("detailModal");
 const detailPanel = document.getElementById("detailPanel");
 const detailKind = document.getElementById("detailKind");
+const detailPaper = document.getElementById("detailPaper");
 const detailName = document.getElementById("detailName");
 const detailChome = document.getElementById("detailChome");
 const detailCoord = document.getElementById("detailCoord");
@@ -204,6 +237,7 @@ function openDetailModal(point) {
       : `マンション（部屋：${point.room || "-"}）`;
 
   detailKind.textContent = kindLabel;
+  detailPaper.textContent = getPaperLabel(point.paper);
   detailName.textContent = point.name || "-";
   detailChome.textContent = point.chome || "-";
   detailCoord.textContent = `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`;
@@ -244,7 +278,7 @@ detailMapBtn.addEventListener("click", () => {
   p.marker.openPopup();
 
   closeDetailModal();
-  closeListModal(); // ← ここで一覧も閉じる
+  closeListModal();
 });
 
 detailDeleteBtn.addEventListener("click", () => {
@@ -312,11 +346,14 @@ function addPointToMap(point, doSave) {
   const chomeText = point.chome ? `<br/>丁目：${point.chome}` : "";
   const noteText = point.note ? `<br/>備考：${point.note}` : "";
 
+  const paperLabel = getPaperLabel(point.paper);
+  const paperText = paperLabel !== "-" ? `<br/>新聞：${paperLabel}` : "";
+
   const photoHtml = point.photo
     ? `<br/><img src="${point.photo}" style="max-width:120px;max-height:120px;margin-top:4px;border-radius:4px;object-fit:cover;" />`
     : "";
 
-  const label = `契約者：${point.name}${typeText}${chomeText}${noteText}${photoHtml}`;
+  const label = `契約者：${point.name}${typeText}${paperText}${chomeText}${noteText}${photoHtml}`;
 
   const marker = createColoredMarker(point).addTo(map);
   marker.bindPopup(label);
@@ -356,7 +393,14 @@ function renderList() {
     header.className = "point-item-header";
 
     const title = document.createElement("span");
-    let titleText = `契約者：${p.name}`;
+    const paperLabel = getPaperLabel(p.paper);
+    let titleText = "";
+
+    if (paperLabel !== "-") {
+      titleText += `[${paperLabel}] `;
+    }
+
+    titleText += `契約者：${p.name}`;
     if (p.kind === "house") {
       titleText += "（一軒家）";
     } else {

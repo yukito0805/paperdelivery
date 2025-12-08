@@ -7,6 +7,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
 }).addTo(map);
 
+// ====== 住所検索用：ホームエリア設定 ======
+// ★ここを自分の配達エリアに変える
+// 例: "埼玉県川口市", "大阪府大阪市〇〇区" など
+const BASE_AREA = "福岡県福岡市";
+
 // ====== データ管理 ======
 // {id, kind, name, room, chome, note, paper, lat, lng, photo, marker}
 let points = [];
@@ -268,29 +273,6 @@ detailModal.addEventListener("click", e => {
   if (e.target === detailModal) closeDetailModal();
 });
 
-// 地図へ移動したあと、詳細も一覧も閉じる
-detailMapBtn.addEventListener("click", () => {
-  if (currentDetailPointId == null) return;
-  const p = points.find(pt => pt.id === currentDetailPointId);
-  if (!p) return;
-
-  map.setView([p.lat, p.lng], 18);
-  p.marker.openPopup();
-
-  closeDetailModal();
-  closeListModal();
-});
-
-detailDeleteBtn.addEventListener("click", () => {
-  if (currentDetailPointId == null) return;
-  const p = points.find(pt => pt.id === currentDetailPointId);
-  if (!p) return;
-  const ok = confirm(`契約者「${p.name}」を削除しますか？`);
-  if (!ok) return;
-  deletePoint(currentDetailPointId);
-  closeDetailModal();
-});
-
 // ====== 配達先一覧（スライドパネル） ======
 const listModal = document.getElementById("listModal");
 const listPanel = document.getElementById("listPanel");
@@ -314,6 +296,29 @@ openListBtn.addEventListener("click", openListModal);
 closeListBtn.addEventListener("click", closeListModal);
 listModal.addEventListener("click", e => {
   if (e.target === listModal) closeListModal();
+});
+
+// 地図へ移動したあと、詳細も一覧も閉じる
+detailMapBtn.addEventListener("click", () => {
+  if (currentDetailPointId == null) return;
+  const p = points.find(pt => pt.id === currentDetailPointId);
+  if (!p) return;
+
+  map.setView([p.lat, p.lng], 18);
+  p.marker.openPopup();
+
+  closeDetailModal();
+  closeListModal();
+});
+
+detailDeleteBtn.addEventListener("click", () => {
+  if (currentDetailPointId == null) return;
+  const p = points.find(pt => pt.id === currentDetailPointId);
+  if (!p) return;
+  const ok = confirm(`契約者「${p.name}」を削除しますか？`);
+  if (!ok) return;
+  deletePoint(currentDetailPointId);
+  closeDetailModal();
 });
 
 // ====== 検索（契約者名） ======
@@ -485,7 +490,7 @@ function moveToCurrentLocation() {
 
 document.getElementById("locateBtn").addEventListener("click", moveToCurrentLocation);
 
-// ====== 住所検索（Nominatim を使用） ======
+// ====== 住所検索（Nominatim・ホームエリア優先） ======
 async function searchAddressAndMove() {
   const input = document.getElementById("addressInput");
   const q = (input.value || "").trim();
@@ -494,10 +499,21 @@ async function searchAddressAndMove() {
     return;
   }
 
+  // 「都・道・府・県」が含まれていないときは、ホームエリアを前に付ける
+  let queryText = q;
+  if (!q.match(/(都|道|府|県)/) && BASE_AREA) {
+    queryText = BASE_AREA + " " + q;
+  }
+
   try {
     const url =
-      "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=jp&q=" +
-      encodeURIComponent(q);
+      "https://nominatim.openstreetmap.org/search" +
+      "?format=json" +
+      "&limit=5" +                  // 複数候補を取る
+      "&countrycodes=jp" +
+      "&addressdetails=1" +
+      "&q=" +
+      encodeURIComponent(queryText);
 
     const res = await fetch(url, {
       headers: {
@@ -509,22 +525,60 @@ async function searchAddressAndMove() {
       throw new Error("HTTP " + res.status);
     }
 
-    const data = await res.json();
+    let data = await res.json();
 
     if (!data || data.length === 0) {
+      // ホームエリア付きで見つからなかった場合、元の文字列でもう一度トライ
+      if (queryText !== q) {
+        const fallbackUrl =
+          "https://nominatim.openstreetmap.org/search" +
+          "?format=json" +
+          "&limit=5" +
+          "&countrycodes=jp" +
+          "&addressdetails=1" +
+          "&q=" +
+          encodeURIComponent(q);
+
+        const res2 = await fetch(fallbackUrl, {
+          headers: { "Accept-Language": "ja" }
+        });
+
+        data = await res2.json();
+        if (!data || data.length === 0) {
+          alert("その住所は見つかりませんでした");
+          return;
+        }
+        moveToBestCandidate(data);
+        return;
+      }
+
       alert("その住所は見つかりませんでした");
       return;
     }
 
-    const place = data[0];
-    const lat = parseFloat(place.lat);
-    const lon = parseFloat(place.lon);
-
-    map.setView([lat, lon], 18);
+    moveToBestCandidate(data);
   } catch (e) {
     console.error(e);
     alert("住所検索中にエラーが発生しました");
   }
+}
+
+// 候補の中からホームエリアに近いものを優先して選ぶ
+function moveToBestCandidate(candidates) {
+  let best = candidates[0];
+
+  if (BASE_AREA) {
+    const hit = candidates.find(c =>
+      (c.display_name || "").includes(BASE_AREA)
+    );
+    if (hit) {
+      best = hit;
+    }
+  }
+
+  const lat = parseFloat(best.lat);
+  const lon = parseFloat(best.lon);
+  map.setView([lat, lon], 18);
 }
 
 const addressInput = document.getElementById("addressInput");

@@ -268,7 +268,7 @@ detailModal.addEventListener("click", e => {
   if (e.target === detailModal) closeDetailModal();
 });
 
-// ★ 地図へ移動したあと、詳細も一覧も閉じる
+// 地図へ移動したあと、詳細も一覧も閉じる
 detailMapBtn.addEventListener("click", () => {
   if (currentDetailPointId == null) return;
   const p = points.find(pt => pt.id === currentDetailPointId);
@@ -484,6 +484,58 @@ function moveToCurrentLocation() {
 }
 
 document.getElementById("locateBtn").addEventListener("click", moveToCurrentLocation);
+
+// ====== 住所検索（Nominatim を使用） ======
+async function searchAddressAndMove() {
+  const input = document.getElementById("addressInput");
+  const q = (input.value || "").trim();
+  if (!q) {
+    alert("住所を入力してください");
+    return;
+  }
+
+  try {
+    const url =
+      "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=jp&q=" +
+      encodeURIComponent(q);
+
+    const res = await fetch(url, {
+      headers: {
+        "Accept-Language": "ja"
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      alert("その住所は見つかりませんでした");
+      return;
+    }
+
+    const place = data[0];
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+
+    map.setView([lat, lon], 18);
+  } catch (e) {
+    console.error(e);
+    alert("住所検索中にエラーが発生しました");
+  }
+}
+
+const addressInput = document.getElementById("addressInput");
+const addressSearchBtn = document.getElementById("addressSearchBtn");
+
+addressSearchBtn.addEventListener("click", searchAddressAndMove);
+addressInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    searchAddressAndMove();
+  }
+});
 
 // ====== 初期読み込み ======
 loadPoints();

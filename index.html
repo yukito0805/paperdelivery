@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>新聞配達ルートマップ（スマホ向け＋写真＋検索＋新聞色分け）</title>
+  <title>新聞配達ルートマップ</title>
 
   <!-- スマホ用レスポンシブ指定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,6 +19,17 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+<!-- 住所検索バー -->
+<div id="addressSearchBar">
+  <input
+    type="text"
+    id="addressInput"
+    placeholder="住所で移動（例：東京都千代田区丸の内1-1）"
+  />
+  <button id="addressSearchBtn" class="primary-btn small-btn">検索</button>
+</div>
+
 <div id="map"></div>
 
 <!-- 配達先一覧を開くフローティングボタン -->

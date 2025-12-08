@@ -10,13 +10,18 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // ====== 住所検索用：ホームエリア設定 ======
 // ★ここを自分の配達エリアに変える
 // 例: "埼玉県川口市", "大阪府大阪市〇〇区" など
-const BASE_AREA = "福岡県福岡市";
+const BASE_AREA = "東京都千代田区";
 
-// ====== データ管理 ======
+// ====== データ管理（配達先） ======
 // {id, kind, name, room, chome, note, paper, lat, lng, photo, marker}
 let points = [];
 let nextId = 1;
 let currentSearchQuery = "";
+
+// ====== データ管理（ルート） ======
+let routePoints = [];   // {id, lat, lng, marker}
+let routePolyline = null;
+let isRouteMode = false;
 
 // 新聞コード → 表示名
 function getPaperLabel(paper) {
@@ -185,10 +190,104 @@ saveBtn.addEventListener("click", async () => {
   }
 });
 
-// 地図タップで新規登録（モーダル表示中は無視）
+// ====== ルートモード関連 ======
+const routeModeBtn = document.getElementById("routeModeBtn");
+
+function updateRouteModeButton() {
+  if (!routeModeBtn) return;
+  if (isRouteMode) {
+    routeModeBtn.classList.add("active");
+    routeModeBtn.textContent = "📍 ルート中";
+  } else {
+    routeModeBtn.classList.remove("active");
+    routeModeBtn.textContent = "📍 ルート";
+  }
+}
+
+routeModeBtn.addEventListener("click", () => {
+  isRouteMode = !isRouteMode;
+  updateRouteModeButton();
+});
+
+// ルートピン追加
+function addRoutePoint(latlng, doSave) {
+  const marker = L.circleMarker(latlng, {
+    radius: 6,
+    color: "#ff9800",
+    weight: 2,
+    fillColor: "#ff9800",
+    fillOpacity: 0.9,
+  }).addTo(map);
+
+  const point = {
+    id: Date.now() + Math.random(),
+    lat: latlng.lat,
+    lng: latlng.lng,
+    marker,
+  };
+
+  routePoints.push(point);
+  updateRoutePolyline();
+
+  if (doSave) saveRoute();
+}
+
+function updateRoutePolyline() {
+  const latlngs = routePoints.map(p => [p.lat, p.lng]);
+
+  if (!routePolyline) {
+    routePolyline = L.polyline(latlngs, {
+      color: "#ff9800",
+      weight: 3,
+    }).addTo(map);
+  } else {
+    routePolyline.setLatLngs(latlngs);
+  }
+}
+
+function saveRoute() {
+  const plain = routePoints.map(p => ({
+    id: p.id,
+    lat: p.lat,
+    lng: p.lng,
+  }));
+  localStorage.setItem("routePoints", JSON.stringify(plain));
+}
+
+function loadRoute() {
+  const raw = localStorage.getItem("routePoints");
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    parsed.forEach(p => {
+      addRoutePoint({ lat: p.lat, lng: p.lng }, false);
+    });
+  } catch (e) {
+    console.error("ルート読み込みエラー", e);
+  }
+}
+
+function clearRoute() {
+  routePoints.forEach(p => map.removeLayer(p.marker));
+  routePoints = [];
+  if (routePolyline) {
+    map.removeLayer(routePolyline);
+    routePolyline = null;
+  }
+  localStorage.removeItem("routePoints");
+}
+
+// ====== 地図クリック：モードによる分岐 ======
 map.on("click", e => {
   if (isModalOpen) return;
-  openModal(e.latlng);
+
+  if (isRouteMode) {
+    // ルートモード中はルートピンを追加
+    addRoutePoint(e.latlng, true);
+  } else {
+    // 通常モードなら配達先登録モーダル
+    openModal(e.latlng);
+  }
 });
 
 // ====== マーカー生成（新聞別の色） ======
@@ -273,31 +372,6 @@ detailModal.addEventListener("click", e => {
   if (e.target === detailModal) closeDetailModal();
 });
 
-// ====== 配達先一覧（スライドパネル） ======
-const listModal = document.getElementById("listModal");
-const listPanel = document.getElementById("listPanel");
-const listEl = document.getElementById("list");
-const openListBtn = document.getElementById("openListBtn");
-const closeListBtn = document.getElementById("closeListBtn");
-
-function openListModal() {
-  listModal.style.display = "flex";
-  requestAnimationFrame(() => listPanel.classList.add("show"));
-}
-
-function closeListModal() {
-  listPanel.classList.remove("show");
-  setTimeout(() => {
-    listModal.style.display = "none";
-  }, 200);
-}
-
-openListBtn.addEventListener("click", openListModal);
-closeListBtn.addEventListener("click", closeListModal);
-listModal.addEventListener("click", e => {
-  if (e.target === listModal) closeListModal();
-});
-
 // 地図へ移動したあと、詳細も一覧も閉じる
 detailMapBtn.addEventListener("click", () => {
   if (currentDetailPointId == null) return;
@@ -319,6 +393,39 @@ detailDeleteBtn.addEventListener("click", () => {
   if (!ok) return;
   deletePoint(currentDetailPointId);
   closeDetailModal();
+});
+
+// ====== 配達先一覧（スライドパネル） ======
+const listModal = document.getElementById("listModal");
+const listPanel = document.getElementById("listPanel");
+const listEl = document.getElementById("list");
+const openListBtn = document.getElementById("openListBtn");
+const closeListBtn = document.getElementById("closeListBtn");
+const clearRouteBtn = document.getElementById("clearRouteBtn");
+
+function openListModal() {
+  listModal.style.display = "flex";
+  requestAnimationFrame(() => listPanel.classList.add("show"));
+}
+
+function closeListModal() {
+  listPanel.classList.remove("show");
+  setTimeout(() => {
+    listModal.style.display = "none";
+  }, 200);
+}
+
+openListBtn.addEventListener("click", openListModal);
+closeListBtn.addEventListener("click", closeListModal);
+listModal.addEventListener("click", e => {
+  if (e.target === listModal) closeListModal();
+});
+
+clearRouteBtn.addEventListener("click", () => {
+  if (routePoints.length === 0) return;
+  const ok = confirm("ルート用ピンと線をすべて削除しますか？");
+  if (!ok) return;
+  clearRoute();
 });
 
 // ====== 検索（契約者名） ======
@@ -592,4 +699,6 @@ addressInput.addEventListener("keydown", (e) => {
 });
 
 // ====== 初期読み込み ======
+updateRouteModeButton();
 loadPoints();
+loadRoute();

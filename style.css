@@ -39,7 +39,6 @@ html, body {
 .fab-btn {
   position: fixed;
   bottom: 16px;
-  left: 16px;
   z-index: 1200;
   border-radius: 999px;
   padding: 10px 14px;
@@ -48,6 +47,19 @@ html, body {
   color: #fff;
   border: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.fab-left {
+  left: 16px;
+}
+
+.fab-right {
+  right: 16px;
+}
+
+/* ルートモード ON の見た目 */
+#routeModeBtn.active {
+  background: #ff9800;
 }
 
 /* 共通ボタン */
@@ -321,6 +333,5 @@ small {
 @media (min-width: 900px) {
   .fab-btn {
     bottom: 24px;
-    left: 24px;
   }
 }

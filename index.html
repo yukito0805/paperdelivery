@@ -33,8 +33,13 @@
 <div id="map"></div>
 
 <!-- 配達先一覧を開くフローティングボタン -->
-<button id="openListBtn" class="fab-btn">
+<button id="openListBtn" class="fab-btn fab-left">
   📋 配達先
+</button>
+
+<!-- ルートモード切り替えボタン -->
+<button id="routeModeBtn" class="fab-btn fab-right">
+  📍 ルート
 </button>
 
 <!-- 新規登録用モーダル -->
@@ -136,6 +141,10 @@
 
     <button id="clearAllBtn" class="danger-btn">
       🗑 すべて削除
+    </button>
+
+    <button id="clearRouteBtn" class="secondary-btn">
+      ルートをクリア
     </button>
 
     <div id="list"></div>
